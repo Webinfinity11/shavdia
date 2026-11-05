@@ -1,0 +1,182 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// wooId / wpId fields hold the ID from the old WordPress site. They are unique,
+// so the import script can upsert and be re-run without creating duplicates.
+
+model Category {
+  id              Int        @id @default(autoincrement())
+  wooId           Int?       @unique
+  name            String
+  slug            String     @unique
+  description     String?
+  image           String?
+  sortOrder       Int        @default(0)
+  metaTitle       String?
+  metaDescription String?
+  /// Path on the old site, used for 301 redirects
+  oldPath         String?
+  parentId        Int?
+  parent          Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children        Category[] @relation("CategoryTree")
+  products        Product[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+}
+
+model Product {
+  id               Int                @id @default(autoincrement())
+  wooId            Int?               @unique
+  name             String
+  slug             String             @unique
+  shortDescription String?
+  description      String?
+  sku              String?
+  /// simple | variable
+  type             String             @default("simple")
+  /// Prices are stored in tetri (1 GEL = 100). Null when only variations have a price.
+  price            Int?
+  salePrice        Int?
+  /// Null means stock is not tracked
+  stockQuantity    Int?
+  /// instock | outofstock | onbackorder
+  stockStatus      String             @default("instock")
+  /// published | draft
+  status           String             @default("published")
+  featured         Boolean            @default(false)
+  /// [{ "name": "Size", "values": ["S", "M"] }]
+  attributes       Json               @default("[]")
+  metaTitle        String?
+  metaDescription  String?
+  /// Path on the old site, used for 301 redirects
+  oldPath          String?
+  images           ProductImage[]
+  variations       ProductVariation[]
+  categories       Category[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@index([status])
+  @@index([sku])
+}
+
+model ProductImage {
+  id        Int     @id @default(autoincrement())
+  url       String
+  alt       String?
+  sortOrder Int     @default(0)
+  productId Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model ProductVariation {
+  id            Int     @id @default(autoincrement())
+  wooId         Int?    @unique
+  productId     Int
+  product       Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  /// { "Size": "M", "Color": "Red" }
+  options       Json
+  sku           String?
+  price         Int?
+  salePrice     Int?
+  stockQuantity Int?
+  stockStatus   String  @default("instock")
+  image         String?
+  sortOrder     Int     @default(0)
+
+  @@index([productId])
+}
+
+/// WordPress media library. One row per file, so re-imports skip what is already downloaded.
+model Media {
+  id        Int      @id @default(autoincrement())
+  wpId      Int?     @unique
+  /// Original URL on the old site, used to rewrite links inside imported HTML
+  sourceUrl String   @unique
+  /// URL on the new site
+  url       String
+  mimeType  String?
+  alt       String?
+  title     String?
+  width     Int?
+  height    Int?
+  createdAt DateTime @default(now())
+}
+
+/// WordPress pages and blog posts
+model Page {
+  id              Int       @id @default(autoincrement())
+  wpId            Int?      @unique
+  /// page | post
+  type            String    @default("page")
+  title           String
+  slug            String
+  content         String    @default("")
+  excerpt         String?
+  image           String?
+  /// published | draft
+  status          String    @default("published")
+  metaTitle       String?
+  metaDescription String?
+  oldPath         String?
+  publishedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([type, slug])
+}
+
+/// Editable site content (header, footer, contact details). Value is JSON.
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model Order {
+  id         Int         @id @default(autoincrement())
+  /// Random id in the customer's confirmation link
+  token      String      @unique
+  /// new | processing | completed | cancelled
+  status     String      @default("new")
+  firstName  String
+  lastName   String
+  phone      String
+  personalId String
+  email      String
+  address    String
+  city       String
+  /// In tetri
+  total      Int
+  items      OrderItem[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  /// Copies below keep the order correct if the product later changes or is deleted
+  productId Int?
+  name      String
+  image     String?
+  size      String   @default("")
+  color     String   @default("")
+  /// In tetri, per piece
+  price     Int
+  quantity  Int
+
+  @@index([orderId])
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "RAILPACK",
+    "buildCommand": "export DATABASE_URL=$DATABASE_PUBLIC_URL && npx prisma migrate deploy && npm run build"
+  },
+  "deploy": {
+    "startCommand": "npx next start",
+    "healthcheckPath": "/",
+    "healthcheckTimeout": 120,
+    "restartPolicyType": "ON_FAILURE"
+  }
+}

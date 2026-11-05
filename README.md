@@ -1,36 +1,33 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SHAVDIA
 
-## Getting Started
+Clothing shop in Georgian. Next.js, Prisma, Postgres, Tailwind.
 
-First, run the development server:
+## Local development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env     # then fill it in
+npm run db:start         # local PostgreSQL on port 5433, leave it running
+npm run dev              # http://localhost:3030
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+For the local database use `DATABASE_URL="postgres://postgres:postgres@localhost:5433/shavdia?sslmode=disable"`. On a new machine run `npx prisma migrate deploy` once.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Pages
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `/` home, `/shop` shop with filters, `/product/[slug]` product
+- `/admin` admin panel: products, categories, home page banners, site settings
 
-## Learn More
+Pages are cached and read from the database when built, so `npm run build` needs a running database with at least one published product. Saving in the admin panel refreshes the cache.
 
-To learn more about Next.js, take a look at the following resources:
+## Importing from the old WooCommerce site
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run import:woo
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Needs `WP_URL`, `WC_CONSUMER_KEY` and `WC_CONSUMER_SECRET`. Safe to re-run. Products are matched by their WooCommerce ID, so a re-run overwrites admin edits to imported products. Empty `importing` placeholders are skipped.
 
-## Deploy on Vercel
+## Photos
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Imported photos are in `public/uploads/products`. Photos uploaded in the admin panel go to `UPLOAD_DIR` (default `.data/uploads`), which must be a persistent volume in production.
