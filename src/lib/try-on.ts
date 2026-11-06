@@ -23,9 +23,29 @@ const GARMENTS: Record<string, string> = {
   chanta: "bag",
 };
 
-/** What to put on the customer, read from the product's categories. Null when they do not say. */
-export function garmentFromCategories(slugs: string[]) {
-  const known = [...new Set(slugs.flatMap((slug) => (GARMENTS[slug] ? [GARMENTS[slug]] : [])))];
+// Word beginnings in product names. Sets come first: "მაისურის და შარვლის ორეული" is a set.
+const NAME_WORDS: [RegExp, string][] = [
+  [/(^|[\s,.(-])(ორეულ|კომპლექტ|სპორტული კოსტიუმ)/, GARMENTS["sportuli-oreuli"]],
+  [/(^|[\s,.(-])(მაისურ|მაიკ|ფუტბოლკ)/, GARMENTS.maika],
+  [/(^|[\s,.(-])(ჰუდი|ჰუდ|სვიტერ|ჯემპრ)/, GARMENTS.hudi],
+  [/(^|[\s,.(-])პერანგ/, GARMENTS.perangi],
+  [/(^|[\s,.(-])(ქურთუ|პიჯაკ|პალტო)/, GARMENTS.qurtuki],
+  [/(^|[\s,.(-])(შარვალ|შარვლ|ჯინს)/, GARMENTS.sharvali],
+  [/(^|[\s,.(-])შორტ/, "shorts"],
+  [/(^|[\s,.(-])(კაბა|კაბის|კაბე)/, GARMENTS.kaba],
+  [/(^|[\s,.(-])(ფეხსაცმ|ბოტას|სპორტული ფეხ)/, GARMENTS.phexsacmeli],
+  [/(^|[\s,.(-])ჩანთ/, GARMENTS.chanta],
+];
+
+/**
+ * What to put on the customer. The product's name decides first, then a single clear category.
+ * Null means neither says, and the product is worked out from its photos.
+ */
+export function garmentFromProduct(name: string, categorySlugs: string[]) {
+  const lower = name.toLowerCase();
+  const fromName = NAME_WORDS.find(([words]) => words.test(lower));
+  if (fromName) return fromName[1];
+  const known = [...new Set(categorySlugs.flatMap((slug) => (GARMENTS[slug] ? [GARMENTS[slug]] : [])))];
   return known.length === 1 ? known[0] : null;
 }
 

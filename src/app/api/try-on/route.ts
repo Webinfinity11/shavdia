@@ -3,7 +3,7 @@ import path from "node:path";
 import sharp from "sharp";
 import { db } from "@/lib/db";
 import { uploadDir } from "@/lib/storage";
-import { buildProductCollage, closestAspectRatio, garmentFromCategories, generateTryOn, takeTryOnSlot } from "@/lib/try-on";
+import { buildProductCollage, closestAspectRatio, garmentFromProduct, generateTryOn, takeTryOnSlot } from "@/lib/try-on";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const MIN_SIDE = 256;
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
 
   const garment = await buildProductCollage(await Promise.all(product.images.map((image) => readProductPhoto(image.url))));
 
-  const garmentType = garmentFromCategories(product.categories.map((category) => category.slug));
+  const garmentType = garmentFromProduct(product.name, product.categories.map((category) => category.slug));
   const result = await generateTryOn(person, garment, garmentType, aspectRatio, apiKey);
   if (!result.ok) {
     if (result.reason === "unavailable") return fail(503, "მოზომება დროებით მიუწვდომელია. სცადე მოგვიანებით.");
