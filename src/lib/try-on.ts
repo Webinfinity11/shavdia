@@ -9,13 +9,35 @@ const HOURLY_PER_VISITOR = 6;
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 
-const PROMPT = `Virtual clothing try-on for a fashion shop.
+const GARMENTS: Record<string, string> = {
+  maika: "T-shirt",
+  perangi: "shirt",
+  hudi: "hoodie",
+  qurtuki: "jacket",
+  sharvali: "trousers",
+  kaba: "dress",
+  "sportuli-oreuli": "two-piece tracksuit (top and bottoms)",
+  phexsacmeli: "pair of shoes",
+  chanta: "bag",
+};
+
+/** What to put on the customer, read from the product's categories. Null when they do not say. */
+export function garmentFromCategories(slugs: string[]) {
+  const known = [...new Set(slugs.flatMap((slug) => (GARMENTS[slug] ? [GARMENTS[slug]] : [])))];
+  return known.length === 1 ? known[0] : null;
+}
+
+export function buildPrompt(garment: string | null) {
+  const target = garment
+    ? `The product is the ${garment} in the second image. Put ONLY this ${garment} on the customer. Everything else the customer is wearing must stay exactly as it is in the first image. Ignore every other item in the second image, even if the model there wears it.`
+    : "The product is the complete outfit worn or shown in the second image. Put that outfit on the customer.";
+  return `Virtual clothing try-on for a fashion shop.
 The first image shows the customer. The second image shows the product, possibly worn by a model.
-Create a realistic photo of the customer from the first image wearing the garment or outfit from the second image.
+${target}
 Keep exactly: the customer's face, identity, skin tone, hair, body shape, pose, and the background and lighting of the first image.
-Copy exactly from the second image: the garment's colour, fabric, texture, cut, length, pockets, zips, prints and any writing or logos.
-Replace only the clothing that the new garment would cover. Ignore the person and background in the second image.
-The fit and folds must look natural on the customer's body. Keep the customer fully and modestly dressed. Add no text or watermark.`;
+Copy exactly from the second image: the product's colour, fabric, texture, cut, length, pockets, zips, prints and any writing or logos.
+The fit and folds must look natural on the customer's body. Keep the customer fully and modestly dressed. Show the whole person from the first image. Add no text or watermark.`;
+}
 
 export type TryOnResult = { ok: true; image: Buffer } | { ok: false; reason: "blocked" | "failed" | "unavailable" };
 
@@ -35,7 +57,7 @@ export function readImage(answer: unknown): string | null {
   return null;
 }
 
-export async function generateTryOn(person: Buffer, product: Buffer, apiKey: string): Promise<TryOnResult> {
+export async function generateTryOn(person: Buffer, product: Buffer, garment: string | null, apiKey: string): Promise<TryOnResult> {
   try {
     const res = await fetch(API_URL, {
       method: "POST",
@@ -43,7 +65,7 @@ export async function generateTryOn(person: Buffer, product: Buffer, apiKey: str
       body: JSON.stringify({
         model: process.env.GEMINI_IMAGE_MODEL || DEFAULT_MODEL,
         input: [
-          { type: "text", text: PROMPT },
+          { type: "text", text: buildPrompt(garment) },
           { type: "image", mime_type: "image/jpeg", data: person.toString("base64") },
           { type: "image", mime_type: "image/jpeg", data: product.toString("base64") },
         ],

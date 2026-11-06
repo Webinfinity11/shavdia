@@ -3,7 +3,7 @@ import path from "node:path";
 import sharp from "sharp";
 import { db } from "@/lib/db";
 import { uploadDir } from "@/lib/storage";
-import { generateTryOn, takeTryOnSlot } from "@/lib/try-on";
+import { garmentFromCategories, generateTryOn, takeTryOnSlot } from "@/lib/try-on";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const MIN_SIDE = 256;
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
   if (!Number.isInteger(productId)) return fail(400, "პროდუქტი ვერ მოიძებნა.");
   const product = await db.product.findFirst({
     where: { id: productId, status: "published" },
-    include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
+    include: { images: { orderBy: { sortOrder: "asc" }, take: 1 }, categories: { select: { slug: true } } },
   });
   const productImage = product?.images[0]?.url;
   if (!productImage) return fail(404, "პროდუქტის ფოტო ვერ მოიძებნა.");
@@ -84,7 +84,8 @@ export async function POST(request: Request) {
     .jpeg({ quality: 88 })
     .toBuffer();
 
-  const result = await generateTryOn(person, garment, apiKey);
+  const garmentType = garmentFromCategories((product?.categories ?? []).map((category) => category.slug));
+  const result = await generateTryOn(person, garment, garmentType, apiKey);
   if (!result.ok) {
     if (result.reason === "unavailable") return fail(503, "მოზომება დროებით მიუწვდომელია. სცადე მოგვიანებით.");
     return result.reason === "blocked"

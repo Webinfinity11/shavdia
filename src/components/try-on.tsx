@@ -120,7 +120,7 @@ export function TryOn({ product, onAddToCart }: Props) {
                 <input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => choosePhoto(event.target.files?.[0])} />
               </label>
             )}
-            {busy ? <p className="try-on-progress">მზადდება, ჩვეულებრივ 20–40 წამი…</p> : null}
+            {busy ? <p className="try-on-progress">მზადდება, ჩვეულებრივ 15–30 წამი…</p> : null}
           </div>
 
           <div className="try-on-side">
