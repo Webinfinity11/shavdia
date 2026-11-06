@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { caps } from "@/lib/text";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Icon } from "@/components/icon";
@@ -23,7 +24,7 @@ async function OrderContent({ params }: Props) {
         <h1>მადლობა, შეკვეთა მიღებულია</h1>
         <p>მალე დაგიკავშირდებით დეტალების დასაზუსტებლად.</p>
         <Link href="/shop" className="button button-light">
-          მაღაზიაში დაბრუნება <Icon name="right" />
+          {caps("მაღაზიაში დაბრუნება")} <Icon name="right" />
         </Link>
       </div>
       <section className="checkout-card" aria-label="შეკვეთის შიგთავსი">

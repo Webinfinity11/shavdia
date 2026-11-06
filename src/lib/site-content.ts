@@ -4,6 +4,11 @@ import { db } from "@/lib/db";
 
 export const CONTENT_TAG = "content";
 
+/** Photos from the design. They use its own crops; uploaded photos simply fill their frame. */
+export const DESIGN_HERO_IMAGE = "/images/hero-model.png";
+export const DESIGN_DETAIL_IMAGE = "/images/overshirt-sand.png";
+export const DESIGN_TILE_IMAGES = ["/images/overshirt-sand.png", "/images/trousers-sand.png"];
+
 export type HomeTile = { image: string; label: string; link: string };
 export type HomeFeature = { title: string; text: string };
 
@@ -51,18 +56,18 @@ export type AboutContent = {
 };
 
 export const DEFAULT_HOME: HomeContent = {
-  heroImage: "/images/home/hero-image.webp",
-  heroAlt: "SHAVDIA-ს შავი მაისური ქართული წარწერით",
-  heroCaption: "",
-  detailImage: "/images/home/gallery-3.webp",
-  detailAlt: "SHAVDIA-ს მაისური ქართული დროშით",
+  heroImage: DESIGN_HERO_IMAGE,
+  heroAlt: "SHAVDIA-ს ქვიშისფერი ზედა და თავისუფალი შარვალი, სრული კომპლექტი",
+  heroCaption: "კოლექცია 01",
+  detailImage: DESIGN_DETAIL_IMAGE,
+  detailAlt: "ტექსტურირებული ზედას საყელო და ელვა ახლოდან",
   editorialTitle: "აღმოაჩინე ახალი კოლექცია",
   editorialButton: "მეტის ნახვა",
   editorialLink: "/shop",
   collectionTitle: "პოპულარული პროდუქტები",
   tiles: [
-    { image: "/images/home/collection.webp", label: "კაცის", link: "/shop" },
-    { image: "/images/home/gallery-2.webp", label: "ქალის", link: "/shop" },
+    { image: DESIGN_TILE_IMAGES[0], label: "ქურთუკები", link: "/shop?category=qurtuki" },
+    { image: DESIGN_TILE_IMAGES[1], label: "შარვლები", link: "/shop?category=sharvali" },
   ],
 };
 

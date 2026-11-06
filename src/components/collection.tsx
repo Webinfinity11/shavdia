@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { CategoryRef, ProductSummary } from "@/lib/product";
+import { caps } from "@/lib/text";
 import { Icon } from "./icon";
 import { ProductCard } from "./product-card";
 
@@ -83,7 +84,7 @@ export function Collection({ title, products: allProducts, tabs }: Props) {
             aria-pressed={filter === null}
             onClick={() => setFilter(null)}
           >
-            ყველა
+            {caps("ყველა")}
           </button>
           {tabs.map((tab) => (
             <button
@@ -93,7 +94,7 @@ export function Collection({ title, products: allProducts, tabs }: Props) {
               aria-pressed={tab.slug === filter}
               onClick={() => setFilter(tab.slug)}
             >
-              {tab.name}
+              {caps(tab.name)}
             </button>
           ))}
         </div>

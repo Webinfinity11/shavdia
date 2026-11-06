@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { caps } from "@/lib/text";
 import { useState } from "react";
 import { descriptionParagraphs, isOnSale, type ProductDetail } from "@/lib/product";
 import { addToCart, MAX_QUANTITY, toggleWishlist, useShopStore } from "@/lib/shop-store";
@@ -9,6 +10,7 @@ import { Icon } from "./icon";
 import { ColorPicker, SizePicker } from "./option-picker";
 import { ProductPrice } from "./product-card";
 import { useShop } from "./shop-provider";
+import { TryOn } from "./try-on";
 
 function Gallery({ product }: { product: ProductDetail }) {
   const [active, setActive] = useState(0);
@@ -51,7 +53,7 @@ function Gallery({ product }: { product: ProductDetail }) {
   );
 }
 
-export function ProductPurchase({ product }: { product: ProductDetail }) {
+export function ProductPurchase({ product, tryOnEnabled }: { product: ProductDetail; tryOnEnabled: boolean }) {
   const { openDialog, showToast } = useShop();
   const { wishlist } = useShopStore();
   const [size, setSize] = useState(product.sizes[0] ?? "");
@@ -59,6 +61,10 @@ export function ProductPurchase({ product }: { product: ProductDetail }) {
   const saved = wishlist.some((item) => item.id === product.id);
   const paragraphs = descriptionParagraphs(product.description);
   const intro = descriptionParagraphs(product.shortDescription);
+  const add = () => {
+    if (addToCart(product, size, color)) openDialog("cart");
+    else showToast(`ერთი პროდუქტის მაქსიმალური რაოდენობაა ${MAX_QUANTITY}.`);
+  };
 
   return (
     <div className="product-layout">
@@ -79,12 +85,9 @@ export function ProductPurchase({ product }: { product: ProductDetail }) {
             className="button"
             type="button"
             disabled={!product.inStock}
-            onClick={() => {
-              if (addToCart(product, size, color)) openDialog("cart");
-              else showToast(`ერთი პროდუქტის მაქსიმალური რაოდენობაა ${MAX_QUANTITY}.`);
-            }}
+            onClick={add}
           >
-            {product.inStock ? "კალათაში დამატება +" : "მარაგში არ არის"}
+            {caps(product.inStock ? "კალათაში დამატება +" : "მარაგში არ არის")}
           </button>
           <button
             className={`wishlist-toggle${saved ? " is-wished" : ""}`}
@@ -96,6 +99,8 @@ export function ProductPurchase({ product }: { product: ProductDetail }) {
             <Icon name="heart" />
           </button>
         </div>
+
+        {tryOnEnabled && product.image ? <TryOn product={product} onAddToCart={add} /> : null}
 
         <ul className="product-assurances">
           <li>დამზადებულია საქართველოში</li>

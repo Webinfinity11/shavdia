@@ -2,12 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { caps } from "@/lib/text";
 import { useRouter } from "next/navigation";
 import { startTransition, useActionState, useEffect, useSyncExternalStore } from "react";
 import { placeOrder, type CheckoutFields } from "@/app/(site)/checkout/actions";
 import { money } from "@/lib/product";
 import { applyCheckoutChanges, cartTotal, clearCart, useShopStore } from "@/lib/shop-store";
-import { useShop } from "./shop-provider";
 
 const FIELDS: { name: CheckoutFields; label: string; type?: string; autoComplete: string; inputMode?: "numeric" | "tel" | "email"; wide?: boolean; maxLength?: number }[] = [
   { name: "firstName", label: "სახელი", autoComplete: "given-name" },
@@ -22,7 +22,6 @@ const FIELDS: { name: CheckoutFields; label: string; type?: string; autoComplete
 const noSubscribe = () => () => {};
 
 export function CheckoutForm() {
-  const { openDialog } = useShop();
   const { cart } = useShopStore();
   const router = useRouter();
   const [state, action, pending] = useActionState(placeOrder, null);
@@ -46,7 +45,7 @@ export function CheckoutForm() {
       <div className="checkout-empty">
         <p>კალათა ცარიელია.</p>
         <Link href="/shop" className="button">
-          მაღაზიაში გადასვლა
+          {caps("მაღაზიაში გადასვლა")}
         </Link>
       </div>
     );
@@ -105,9 +104,9 @@ export function CheckoutForm() {
       <aside className="checkout-card checkout-summary" aria-labelledby="checkout-summary">
         <div className="checkout-summary-head">
           <h2 id="checkout-summary">შენი შეკვეთა</h2>
-          <button type="button" className="checkout-edit" onClick={() => openDialog("cart")}>
-            შეცვლა
-          </button>
+          <Link href="/cart" className="checkout-edit">
+            კალათის შეცვლა
+          </Link>
         </div>
         <ul className="checkout-items">
           {cart.map((item) => {
@@ -132,7 +131,7 @@ export function CheckoutForm() {
           <strong>{money(cartTotal(cart))}</strong>
         </div>
         <button className="button checkout-submit" type="submit" disabled={pending}>
-          {pending ? "იგზავნება…" : "შეკვეთის დადასტურება"}
+          {caps(pending ? "იგზავნება…" : "შეკვეთის დადასტურება")}
         </button>
         <p className="checkout-note">შეკვეთის მიღების შემდეგ დაგიკავშირდებით დეტალების დასაზუსტებლად.</p>
       </aside>

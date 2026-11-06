@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { caps } from "@/lib/text";
 import { currentPrice, isOnSale, money, needsChoice, type ProductSummary } from "@/lib/product";
 import { addToCart, MAX_QUANTITY, toggleWishlist, useShopStore } from "@/lib/shop-store";
 import { Icon } from "./icon";
@@ -65,7 +66,7 @@ export function ProductCard({ product, eager = false, sizes }: Props) {
         <ProductPrice product={product} />
         {product.inStock && needsChoice(product) ? (
           <Link className="quick-add" href={href} aria-label={`${product.name}: ზომის და ფერის არჩევა`}>
-            <span>არჩევა</span>
+            <span>{caps("არჩევა")}</span>
             <Icon name="right" />
           </Link>
         ) : (
@@ -81,11 +82,11 @@ export function ProductCard({ product, eager = false, sizes }: Props) {
           >
             {product.inStock ? (
               <>
-                <span>კალათაში</span>
+                <span>{caps("კალათაში")}</span>
                 <Icon name="plus" />
               </>
             ) : (
-              <span>მარაგში არ არის</span>
+              <span>{caps("მარაგში არ არის")}</span>
             )}
           </button>
         )}

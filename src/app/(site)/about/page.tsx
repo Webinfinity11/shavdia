@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { caps } from "@/lib/text";
 import { Icon } from "@/components/icon";
 import { getAbout } from "@/lib/site-content";
 
@@ -77,7 +78,7 @@ export default async function AboutPage() {
       <section className="about-slogan">
         <p>{about.slogan}</p>
         <Link href="/shop" className="button button-light">
-          იხილეთ კოლექცია <Icon name="right" />
+          {caps("იხილეთ კოლექცია")} <Icon name="right" />
         </Link>
       </section>
     </main>

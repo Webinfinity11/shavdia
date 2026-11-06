@@ -18,6 +18,12 @@ const PATHS = {
   menu: <path d="M3 7h18M3 12h18M3 17h18" />,
   plus: <path d="M12 5v14M5 12h14" />,
   minus: <path d="M5 12h14" />,
+  camera: (
+    <>
+      <path d="M4 8h3.5L9 5.5h6L16.5 8H20a1 1 0 0 1 1 1v9.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" />
+      <circle cx="12" cy="13.5" r="3.6" />
+    </>
+  ),
   arrow: <path d="M4 12h16m-6-6 6 6-6 6" />,
 };
 

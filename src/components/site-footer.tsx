@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { caps } from "@/lib/text";
 import type { SiteInfo } from "@/lib/site-content";
 
 export function SiteFooter({ site }: { site: SiteInfo }) {
@@ -9,19 +10,20 @@ export function SiteFooter({ site }: { site: SiteInfo }) {
         <Image src="/images/shavdia-logo.jpg" alt="SHAVDIA, MADE IN SAKARTVELO" width={1280} height={102} sizes="410px" />
       </Link>
       <nav className="footer-links" aria-label="ფუტერის მენიუ">
-        <Link href="/shop">მაღაზია</Link>
-        <Link href="/about">ჩვენ შესახებ</Link>
-        <Link href="/contact">კონტაქტი</Link>
+        <Link href="/shop">{caps("მაღაზია")}</Link>
+        <Link href="/cart">{caps("კალათა")}</Link>
+        <Link href="/about">{caps("ჩვენ შესახებ")}</Link>
+        <Link href="/contact">{caps("კონტაქტი")}</Link>
         {site.phone ? <a href={`tel:${site.phone.replace(/\s/g, "")}`}>{site.phone}</a> : null}
         {site.email ? <a href={`mailto:${site.email}`}>{site.email}</a> : null}
         {site.facebook ? (
           <a href={site.facebook} target="_blank" rel="noopener noreferrer">
-            Facebook
+            {caps("Facebook")}
           </a>
         ) : null}
         {site.instagram ? (
           <a href={site.instagram} target="_blank" rel="noopener noreferrer">
-            Instagram
+            {caps("Instagram")}
           </a>
         ) : null}
       </nav>

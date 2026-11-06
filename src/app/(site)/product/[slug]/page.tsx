@@ -52,7 +52,7 @@ export default async function ProductPage({ params }: Props) {
         <span aria-current="page">{product.name}</span>
       </nav>
 
-      <ProductPurchase key={product.id} product={product} />
+      <ProductPurchase key={product.id} product={product} tryOnEnabled={Boolean(process.env.GEMINI_API_KEY)} />
 
       {related.length ? (
         <section className="related-section" aria-labelledby="related-title">

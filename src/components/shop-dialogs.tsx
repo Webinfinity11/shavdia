@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { caps } from "@/lib/text";
 import { useEffect, useRef, useState } from "react";
 import { currentPrice, money, needsChoice, type ProductSummary } from "@/lib/product";
 import {
@@ -75,7 +76,7 @@ function EmptyState({ message }: { message: string }) {
     <div className="dialog-empty">
       <p>{message}</p>
       <Link className="dialog-action" href="/shop" onClick={closeDialog}>
-        კოლექციის ნახვა
+        {caps("კოლექციის ნახვა")}
       </Link>
     </div>
   );
@@ -273,7 +274,7 @@ function CartRow({ item, onRemoved }: { item: CartItem; onRemoved: () => void })
 function CartDialog() {
   const { closeDialog } = useShop();
   const { cart } = useShopStore();
-  const continueButton = useRef<HTMLButtonElement>(null);
+  const cartLink = useRef<HTMLAnchorElement>(null);
 
   return (
     <ShopDialog name="cart" id="cart-dialog" className="drawer-dialog" labelledBy="cart-title">
@@ -282,23 +283,23 @@ function CartDialog() {
         {cart.length === 0 ? (
           <EmptyState message="კალათა ცარიელია." />
         ) : (
-          cart.map((item) => <CartRow key={item.key} item={item} onRemoved={() => continueButton.current?.focus()} />)
+          cart.map((item) => <CartRow key={item.key} item={item} onRemoved={() => cartLink.current?.focus()} />)
         )}
       </div>
-      <div className="cart-footer">
-        <div className="cart-total">
-          <span>ჯამი</span>
-          <strong id="cart-subtotal">{money(cartTotal(cart))}</strong>
-        </div>
-        {cart.length ? (
-          <Link className="button cart-checkout" href="/checkout" onClick={closeDialog}>
-            შეკვეთის გაფორმება <Icon name="right" />
+      {cart.length ? (
+        <div className="cart-footer">
+          <div className="cart-total">
+            <span>ჯამი</span>
+            <strong id="cart-subtotal">{money(cartTotal(cart))}</strong>
+          </div>
+          <Link ref={cartLink} className="button button-outline" href="/cart" onClick={closeDialog}>
+            {caps("კალათის ნახვა")}
           </Link>
-        ) : null}
-        <button ref={continueButton} className="button button-outline" type="button" onClick={closeDialog}>
-          შოპინგის გაგრძელება
-        </button>
-      </div>
+          <Link className="button cart-checkout" href="/checkout" onClick={closeDialog}>
+            {caps("შეკვეთის გაფორმება")} <Icon name="right" />
+          </Link>
+        </div>
+      ) : null}
     </ShopDialog>
   );
 }
@@ -318,7 +319,7 @@ export function ShopDialogs() {
         {dialog === "wishlist" ? <WishlistBody /> : null}
         <div className="cart-footer">
           <button className="button" type="button" onClick={closeDialog}>
-            შოპინგის გაგრძელება
+            {caps("შოპინგის გაგრძელება")}
           </button>
         </div>
       </ShopDialog>

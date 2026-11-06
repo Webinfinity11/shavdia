@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { caps } from "@/lib/text";
 import { Suspense } from "react";
 import { FilterPanel } from "@/components/filter-panel";
 import { Icon } from "@/components/icon";
@@ -125,7 +126,7 @@ async function ShopContent({ searchParams }: { searchParams: Promise<Record<stri
               <input type="number" name="max" min="0" step="any" placeholder="მდე" defaultValue={query.max ?? ""} />
             </label>
             <button type="submit" className="filter-pill">
-              გამოყენება
+              {caps("გამოყენება")}
             </button>
           </form>
         </section>

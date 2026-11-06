@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { caps } from "@/lib/text";
 import { useEffect, useRef, useState } from "react";
 import type { CategoryRef } from "@/lib/product";
 import { useShopStore } from "@/lib/shop-store";
@@ -42,9 +43,9 @@ export function SiteHeader({ categories }: { categories: CategoryRef[] }) {
     <>
       <header className="site-header">
         <nav className="header-links" aria-label="მთავარი მენიუ">
-          <Link href="/shop">მაღაზია</Link>
-          <Link href="/about">ჩვენ შესახებ</Link>
-          <Link href="/contact">კონტაქტი</Link>
+          <Link href="/shop">{caps("მაღაზია")}</Link>
+          <Link href="/about">{caps("ჩვენ შესახებ")}</Link>
+          <Link href="/contact">{caps("კონტაქტი")}</Link>
         </nav>
         <Link className="brand-link" href="/" aria-label="SHAVDIA, მთავარი გვერდი">
           <Image
@@ -98,18 +99,21 @@ export function SiteHeader({ categories }: { categories: CategoryRef[] }) {
       </header>
       <nav ref={menu} id="mobile-menu" className="mobile-menu" aria-label="მობილური მენიუ" hidden={!menuOpen}>
         <Link href="/shop" onClick={closeMenu}>
-          ყველა პროდუქტი
+          {caps("ყველა პროდუქტი")}
         </Link>
         {categories.map((category) => (
           <Link key={category.slug} href={`/shop?category=${category.slug}`} onClick={closeMenu}>
-            {category.name}
+            {caps(category.name)}
           </Link>
         ))}
         <Link href="/about" onClick={closeMenu}>
-          ჩვენ შესახებ
+          {caps("ჩვენ შესახებ")}
         </Link>
         <Link href="/contact" onClick={closeMenu}>
-          კონტაქტი
+          {caps("კონტაქტი")}
+        </Link>
+        <Link href="/cart" onClick={closeMenu}>
+          {caps("კალათა")}
         </Link>
       </nav>
     </>

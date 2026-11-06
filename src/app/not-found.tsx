@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { caps } from "@/lib/text";
 
 export default function NotFound() {
   return (
@@ -6,7 +7,7 @@ export default function NotFound() {
       <h1>გვერდი ვერ მოიძებნა</h1>
       <p>ეს გვერდი არ არსებობს ან წაშლილია.</p>
       <Link href="/" className="button">
-        მთავარი გვერდი
+        {caps("მთავარი გვერდი")}
       </Link>
     </main>
   );
