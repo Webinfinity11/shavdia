@@ -3,7 +3,7 @@ import path from "node:path";
 import sharp from "sharp";
 import { db } from "@/lib/db";
 import { uploadDir } from "@/lib/storage";
-import { closestAspectRatio, garmentFromCategories, generateTryOn, takeTryOnSlot } from "@/lib/try-on";
+import { buildProductCollage, closestAspectRatio, garmentFromCategories, generateTryOn, takeTryOnSlot } from "@/lib/try-on";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const MIN_SIDE = 256;
@@ -56,10 +56,9 @@ export async function POST(request: Request) {
   if (!Number.isInteger(productId)) return fail(400, "პროდუქტი ვერ მოიძებნა.");
   const product = await db.product.findFirst({
     where: { id: productId, status: "published" },
-    include: { images: { orderBy: { sortOrder: "asc" }, take: 1 }, categories: { select: { slug: true } } },
+    include: { images: { orderBy: { sortOrder: "asc" }, take: 4 }, categories: { select: { slug: true } } },
   });
-  const productImage = product?.images[0]?.url;
-  if (!productImage) return fail(404, "პროდუქტის ფოტო ვერ მოიძებნა.");
+  if (!product?.images.length) return fail(404, "პროდუქტის ფოტო ვერ მოიძებნა.");
 
   // Re-encoding rejects files that are not really images and removes metadata such as location.
   let person: Buffer;
@@ -81,13 +80,9 @@ export async function POST(request: Request) {
   if (slot === "visitor") return fail(429, "ცდების ლიმიტი ამოიწურა. სცადე ერთ საათში.");
   if (slot === "daily") return fail(429, "დღევანდელი ცდები ამოიწურა. სცადე ხვალ.");
 
-  const garment = await sharp(await readProductPhoto(productImage))
-    .resize({ width: 1024, height: 1024, fit: "inside", withoutEnlargement: true })
-    .flatten({ background: "#ffffff" })
-    .jpeg({ quality: 88 })
-    .toBuffer();
+  const garment = await buildProductCollage(await Promise.all(product.images.map((image) => readProductPhoto(image.url))));
 
-  const garmentType = garmentFromCategories((product?.categories ?? []).map((category) => category.slug));
+  const garmentType = garmentFromCategories(product.categories.map((category) => category.slug));
   const result = await generateTryOn(person, garment, garmentType, aspectRatio, apiKey);
   if (!result.ok) {
     if (result.reason === "unavailable") return fail(503, "მოზომება დროებით მიუწვდომელია. სცადე მოგვიანებით.");

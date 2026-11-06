@@ -1,5 +1,7 @@
 // Virtual try-on through the Gemini image API. Photos are sent to Google and never saved here.
 
+import sharp from "sharp";
+
 const API_URL = "https://generativelanguage.googleapis.com/v1beta/interactions";
 const API_REVISION = "2026-05-20";
 const DEFAULT_MODEL = "gemini-nano-banana-2.1";
@@ -29,9 +31,9 @@ export function garmentFromCategories(slugs: string[]) {
 
 export function buildPrompt(garment: string | null) {
   const target = garment
-    ? `Change ONLY the customer's clothing that this ${garment} would replace, using the ${garment} shown in IMAGE 2. All other clothing and shoes the customer wears stay exactly as they are in IMAGE 1. Ignore every other item in IMAGE 2.`
-    : "Change the customer's clothing to the complete outfit shown in IMAGE 2.";
-  return `This is a photo EDIT of IMAGE 1, not a new photo. IMAGE 1 is the customer. IMAGE 2 is only a reference for a clothing item.
+    ? `The product is the ${garment}. Change ONLY the customer's clothing that this ${garment} would replace. All other clothing and shoes the customer wears stay exactly as they are in IMAGE 1. Ignore every other item in IMAGE 2.`
+    : `First work out what the product is: it is the item that the photos in IMAGE 2 focus on, usually the one shown close up or from several sides. Other things a model wears or holds, such as shorts, trousers, shoes, socks or bags, are only styling and are NOT the product, unless they clearly match the top in fabric and colour as one set. Change ONLY the customer's clothing that the product would replace. All other clothing and shoes the customer wears stay exactly as they are in IMAGE 1.`;
+  return `This is a photo EDIT of IMAGE 1, not a new photo. IMAGE 1 is the customer. IMAGE 2 is only a reference for a clothing item: a collage of one or more photos of the same product.
 
 ${target}
 
@@ -62,6 +64,24 @@ const ASPECT_RATIOS = [
 export function closestAspectRatio(width: number, height: number) {
   const ratio = width / height;
   return ASPECT_RATIOS.reduce((best, row) => (Math.abs(row[1] - ratio) < Math.abs(best[1] - ratio) ? row : best))[0];
+}
+
+const COLLAGE_PHOTOS = 4;
+const CELL_WIDTH = 480;
+const CELL_HEIGHT = 640;
+
+/** Puts the product's photos into one picture, so more views cost no more than one input image. */
+export async function buildProductCollage(photos: Buffer[]) {
+  const used = photos.slice(0, COLLAGE_PHOTOS);
+  const columns = used.length === 4 ? 2 : used.length;
+  const rows = Math.ceil(used.length / columns);
+  const cells = await Promise.all(
+    used.map((photo) => sharp(photo).resize(CELL_WIDTH, CELL_HEIGHT, { fit: "contain", background: "#ffffff" }).flatten({ background: "#ffffff" }).jpeg({ quality: 88 }).toBuffer()),
+  );
+  return sharp({ create: { width: columns * CELL_WIDTH, height: rows * CELL_HEIGHT, channels: 3, background: "#ffffff" } })
+    .composite(cells.map((input, index) => ({ input, left: (index % columns) * CELL_WIDTH, top: Math.floor(index / columns) * CELL_HEIGHT })))
+    .jpeg({ quality: 88 })
+    .toBuffer();
 }
 
 export type TryOnResult = { ok: true; image: Buffer } | { ok: false; reason: "blocked" | "failed" | "unavailable" };
