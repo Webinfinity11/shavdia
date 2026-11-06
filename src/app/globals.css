@@ -906,3 +906,6 @@ body:has(dialog[open]) { overflow: hidden; }
   .try-on-side { padding: 0; }
   .try-on-dialog { width: calc(100vw - 16px); max-width: calc(100vw - 16px); max-height: 96dvh; }
 }
+
+/* Try-on photos keep their own shape */
+.try-on-stage > img { object-fit: contain; }

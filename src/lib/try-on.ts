@@ -29,14 +29,39 @@ export function garmentFromCategories(slugs: string[]) {
 
 export function buildPrompt(garment: string | null) {
   const target = garment
-    ? `The product is the ${garment} in the second image. Put ONLY this ${garment} on the customer. Everything else the customer is wearing must stay exactly as it is in the first image. Ignore every other item in the second image, even if the model there wears it.`
-    : "The product is the complete outfit worn or shown in the second image. Put that outfit on the customer.";
-  return `Virtual clothing try-on for a fashion shop.
-The first image shows the customer. The second image shows the product, possibly worn by a model.
+    ? `Change ONLY the customer's clothing that this ${garment} would replace, using the ${garment} shown in IMAGE 2. All other clothing and shoes the customer wears stay exactly as they are in IMAGE 1. Ignore every other item in IMAGE 2.`
+    : "Change the customer's clothing to the complete outfit shown in IMAGE 2.";
+  return `This is a photo EDIT of IMAGE 1, not a new photo. IMAGE 1 is the customer. IMAGE 2 is only a reference for a clothing item.
+
 ${target}
-Keep exactly: the customer's face, identity, skin tone, hair, body shape, pose, and the background and lighting of the first image.
-Copy exactly from the second image: the product's colour, fabric, texture, cut, length, pockets, zips, prints and any writing or logos.
-The fit and folds must look natural on the customer's body. Keep the customer fully and modestly dressed. Show the whole person from the first image. Add no text or watermark.`;
+
+IMAGE 1 stays the base of the result. Do not change, in any way:
+- the pose: the head, arms, hands, legs and feet stay in exactly the same position and at the same angle, even if the pose is unusual, seated or has raised arms
+- the body: the same build, weight, height, shoulder width, waist and proportions. Never make the customer larger, more muscular, taller or more like the person in IMAGE 2
+- the face, hair, skin tone and identity
+- the background, lighting, camera angle, framing and crop
+
+If a person appears in IMAGE 2, they do not matter. Do not copy their body, pose, height, proportions, gender, hands or background. Use IMAGE 2 only for the garment's colour, fabric, texture, cut, length, pockets, zips, prints, writing and logos.
+
+Reshape the garment to fit the customer's exact body and pose from IMAGE 1, with natural folds: sleeves follow the customer's arms, and fabric bends with how they stand or sit. Keep the customer fully and modestly dressed. Add no text or watermark.`;
+}
+
+const ASPECT_RATIOS = [
+  ["1:1", 1],
+  ["4:5", 4 / 5],
+  ["5:4", 5 / 4],
+  ["3:4", 3 / 4],
+  ["4:3", 4 / 3],
+  ["2:3", 2 / 3],
+  ["3:2", 3 / 2],
+  ["9:16", 9 / 16],
+  ["16:9", 16 / 9],
+] as const;
+
+/** The supported shape closest to the customer's photo, so the result keeps its framing. */
+export function closestAspectRatio(width: number, height: number) {
+  const ratio = width / height;
+  return ASPECT_RATIOS.reduce((best, row) => (Math.abs(row[1] - ratio) < Math.abs(best[1] - ratio) ? row : best))[0];
 }
 
 export type TryOnResult = { ok: true; image: Buffer } | { ok: false; reason: "blocked" | "failed" | "unavailable" };
@@ -57,7 +82,7 @@ export function readImage(answer: unknown): string | null {
   return null;
 }
 
-export async function generateTryOn(person: Buffer, product: Buffer, garment: string | null, apiKey: string): Promise<TryOnResult> {
+export async function generateTryOn(person: Buffer, product: Buffer, garment: string | null, aspectRatio: string, apiKey: string): Promise<TryOnResult> {
   try {
     const res = await fetch(API_URL, {
       method: "POST",
@@ -65,11 +90,13 @@ export async function generateTryOn(person: Buffer, product: Buffer, garment: st
       body: JSON.stringify({
         model: process.env.GEMINI_IMAGE_MODEL || DEFAULT_MODEL,
         input: [
-          { type: "text", text: buildPrompt(garment) },
+          { type: "text", text: "IMAGE 1, the customer:" },
           { type: "image", mime_type: "image/jpeg", data: person.toString("base64") },
+          { type: "text", text: "IMAGE 2, the clothing reference:" },
           { type: "image", mime_type: "image/jpeg", data: product.toString("base64") },
+          { type: "text", text: buildPrompt(garment) },
         ],
-        response_format: { type: "image", aspect_ratio: "3:4", image_size: "1K" },
+        response_format: { type: "image", aspect_ratio: aspectRatio, image_size: "1K" },
       }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });

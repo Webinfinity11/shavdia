@@ -3,7 +3,7 @@ import path from "node:path";
 import sharp from "sharp";
 import { db } from "@/lib/db";
 import { uploadDir } from "@/lib/storage";
-import { garmentFromCategories, generateTryOn, takeTryOnSlot } from "@/lib/try-on";
+import { closestAspectRatio, garmentFromCategories, generateTryOn, takeTryOnSlot } from "@/lib/try-on";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const MIN_SIDE = 256;
@@ -63,10 +63,13 @@ export async function POST(request: Request) {
 
   // Re-encoding rejects files that are not really images and removes metadata such as location.
   let person: Buffer;
+  let aspectRatio: string;
   try {
     const source = sharp(Buffer.from(await photo.arrayBuffer())).rotate();
     const { width, height } = await source.metadata();
     if (Math.min(width, height) < MIN_SIDE) return fail(400, "ფოტო ძალიან პატარაა. აირჩიე უფრო დიდი ფოტო.");
+    const upright = await sharp(Buffer.from(await photo.arrayBuffer())).rotate().toBuffer({ resolveWithObject: true });
+    aspectRatio = closestAspectRatio(upright.info.width, upright.info.height);
     person = await source.resize({ width: 1536, height: 1536, fit: "inside", withoutEnlargement: true }).jpeg({ quality: 88 }).toBuffer();
   } catch {
     return fail(400, "ეს ფაილი ფოტოდ ვერ წავიკითხეთ.");
@@ -85,7 +88,7 @@ export async function POST(request: Request) {
     .toBuffer();
 
   const garmentType = garmentFromCategories((product?.categories ?? []).map((category) => category.slug));
-  const result = await generateTryOn(person, garment, garmentType, apiKey);
+  const result = await generateTryOn(person, garment, garmentType, aspectRatio, apiKey);
   if (!result.ok) {
     if (result.reason === "unavailable") return fail(503, "მოზომება დროებით მიუწვდომელია. სცადე მოგვიანებით.");
     return result.reason === "blocked"
