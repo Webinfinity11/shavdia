@@ -8,8 +8,8 @@
   --canvas: #fff;
   --photo: #e8e8e8;
   --soft-shadow: 0 7px 22px rgba(0, 0, 0, .065), 0 1px 3px rgba(0, 0, 0, .025);
-  --sans: Arial, Helvetica, var(--font-ka-sans), sans-serif;
-  --serif: Georgia, 'Times New Roman', var(--font-ka-serif), serif;
+  --sans: var(--font-arimo), var(--font-ka-sans), Arial, Helvetica, sans-serif;
+  --serif: var(--font-gelasio), var(--font-ka-serif), Georgia, 'Times New Roman', serif;
 }
 
 @layer base {
