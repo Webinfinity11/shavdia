@@ -62,6 +62,84 @@ export function Collection({ title, products: allProducts, tabs }: Props) {
     };
   }, [filter]);
 
+  useEffect(() => {
+    const element = track.current;
+    if (!element) return;
+    let startX = 0;
+    let startLeft = 0;
+    let pointer: number | null = null;
+    let dragged = false;
+
+    const down = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse" || event.button !== 0) return;
+      pointer = event.pointerId;
+      startX = event.clientX;
+      startLeft = element.scrollLeft;
+      dragged = false;
+    };
+    const moveDrag = (event: PointerEvent) => {
+      if (pointer !== event.pointerId) return;
+      const delta = event.clientX - startX;
+      if (!dragged && Math.abs(delta) < 6) return;
+      if (!dragged) {
+        dragged = true;
+        element.setPointerCapture(event.pointerId);
+        element.classList.add("is-dragging");
+      }
+      element.scrollLeft = startLeft - delta;
+    };
+    const up = (event: PointerEvent) => {
+      if (pointer !== event.pointerId) return;
+      pointer = null;
+      if (!dragged) return;
+      const left = element.scrollLeft;
+      // Keep snap off until the smooth settle onto the nearest card finishes.
+      let settled = false;
+      const settle = () => {
+        if (settled) return;
+        settled = true;
+        element.classList.remove("is-dragging");
+        element.removeEventListener("scrollend", settle);
+      };
+      element.addEventListener("scrollend", settle);
+      window.setTimeout(settle, 600);
+      const trackLeft = element.getBoundingClientRect().left;
+      const padding = parseFloat(getComputedStyle(element).scrollPaddingInlineStart) || 0;
+      let target = left;
+      let distance = Infinity;
+      for (const card of Array.from(element.children)) {
+        const offset = card.getBoundingClientRect().left - trackLeft - padding;
+        if (Math.abs(offset) < distance) {
+          distance = Math.abs(offset);
+          target = left + offset;
+        }
+      }
+      element.scrollTo({ left: target, behavior: "smooth" });
+    };
+    const click = (event: MouseEvent) => {
+      if (!dragged) return;
+      event.preventDefault();
+      event.stopPropagation();
+      dragged = false;
+    };
+    const noNativeDrag = (event: DragEvent) => event.preventDefault();
+
+    element.addEventListener("pointerdown", down);
+    element.addEventListener("pointermove", moveDrag);
+    element.addEventListener("pointerup", up);
+    element.addEventListener("pointercancel", up);
+    element.addEventListener("click", click, true);
+    element.addEventListener("dragstart", noNativeDrag);
+    return () => {
+      element.removeEventListener("pointerdown", down);
+      element.removeEventListener("pointermove", moveDrag);
+      element.removeEventListener("pointerup", up);
+      element.removeEventListener("pointercancel", up);
+      element.removeEventListener("click", click, true);
+      element.removeEventListener("dragstart", noNativeDrag);
+    };
+  }, []);
+
   const move = (direction: 1 | -1) => {
     const element = track.current;
     const card = element?.firstElementChild;
