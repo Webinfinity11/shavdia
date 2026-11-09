@@ -63,9 +63,20 @@ IMAGE 1 stays the base of the result. Do not change, in any way:
 - the face, hair, skin tone and identity
 - the background, lighting, camera angle, framing and crop
 
-If a person appears in IMAGE 2, they do not matter. Do not copy their body, pose, height, proportions, gender, hands or background. Use IMAGE 2 only for the garment's colour, fabric, texture, cut, length, pockets, zips, prints, writing and logos.
+If a person appears in IMAGE 2, they do not matter. Do not copy their body, pose, height, proportions, gender, hands or background. Use IMAGE 2 only for the garment itself.
 
-Reshape the garment to fit the customer's exact body and pose from IMAGE 1, with natural folds: sleeves follow the customer's arms, and fabric bends with how they stand or sit. Keep the customer fully and modestly dressed. Add no text or watermark.`;
+The garment must be an exact 1:1 copy of the one in IMAGE 2, as if the customer put on that very piece. Study every photo in IMAGE 2 and copy precisely:
+- the exact colour and shade of every part, with no shift in hue, brightness or saturation, and the same colour on trims, cuffs, collar and stitching
+- the fabric and its texture: knit, denim, leather, fleece, sheen or matte, ribbing, quilting
+- the cut and fit: loose, oversized, regular or slim, exactly as loose or tight as in IMAGE 2
+- where it ends on the body: the hem length relative to the hips or knees and the sleeve length relative to the wrist or elbow, the same as in IMAGE 2
+- the neckline, collar, hood, cuffs and hem shape
+- every detail at its exact place, size and count: buttons, zips, pockets, seams, panels, stripes, drawstrings, patches, labels
+- every print, pattern, logo and piece of writing at the same position, size and orientation, with the same letters spelled exactly; keep logos sharp and do not mirror them
+If the photos in IMAGE 2 show the garment in different colours, use only the colour shown in the first photo (top left) and use the other photos only for shape and details.
+Do not simplify, redesign, recolour or "improve" the garment, and do not add any detail that is not in IMAGE 2. If a part is hidden in IMAGE 2, continue it in the same style as the visible parts.
+
+Reshape the garment to fit the customer's exact body and pose from IMAGE 1, with natural folds: sleeves follow the customer's arms, and fabric bends with how they stand or sit. Light the garment with the lighting of IMAGE 1, without changing its real colour. Keep the customer fully and modestly dressed. Add no text or watermark.`;
 }
 
 const ASPECT_RATIOS = [
@@ -90,17 +101,34 @@ const COLLAGE_PHOTOS = 4;
 const CELL_WIDTH = 480;
 const CELL_HEIGHT = 640;
 
+/** Cuts away the plain white or flat background around a product photo, so the garment fills more of its cell. */
+async function trimBorder(photo: Buffer) {
+  try {
+    const trimmed = await sharp(photo).rotate().flatten({ background: "#ffffff" }).trim({ threshold: 12 }).toBuffer({ resolveWithObject: true });
+    // A tiny result means the trim ate the garment (for example a white shirt on white); keep the original.
+    return trimmed.info.width >= 120 && trimmed.info.height >= 120 ? trimmed.data : photo;
+  } catch {
+    return photo;
+  }
+}
+
 /** Puts the product's photos into one picture, so more views cost no more than one input image. */
 export async function buildProductCollage(photos: Buffer[]) {
   const used = photos.slice(0, COLLAGE_PHOTOS);
   const columns = used.length === 4 ? 2 : used.length;
   const rows = Math.ceil(used.length / columns);
   const cells = await Promise.all(
-    used.map((photo) => sharp(photo).resize(CELL_WIDTH, CELL_HEIGHT, { fit: "contain", background: "#ffffff" }).flatten({ background: "#ffffff" }).jpeg({ quality: 88 }).toBuffer()),
+    used.map(async (photo) =>
+      sharp(await trimBorder(photo))
+        .resize(CELL_WIDTH, CELL_HEIGHT, { fit: "contain", background: "#ffffff", kernel: "lanczos3" })
+        .flatten({ background: "#ffffff" })
+        .jpeg({ quality: 92 })
+        .toBuffer(),
+    ),
   );
   return sharp({ create: { width: columns * CELL_WIDTH, height: rows * CELL_HEIGHT, channels: 3, background: "#ffffff" } })
     .composite(cells.map((input, index) => ({ input, left: (index % columns) * CELL_WIDTH, top: Math.floor(index / columns) * CELL_HEIGHT })))
-    .jpeg({ quality: 88 })
+    .jpeg({ quality: 92 })
     .toBuffer();
 }
 
